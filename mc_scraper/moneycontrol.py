@@ -93,13 +93,13 @@ def sync_news():
     bufferColl.delete_many({})
 
     base_urls = {
-    "business": ("https://www.moneycontrol.com/news/business", 30),
-    "companies": ("https://www.moneycontrol.com/news/tags/companies.html", 30),
-    "economy": ("https://www.moneycontrol.com/news/business/economy", 30),
-    "personal-finance": ("https://www.moneycontrol.com/news/business/personal-finance", 30),
-    "stocks": ("https://www.moneycontrol.com/news/business/stocks", 30)
-    #"tech-analysis": ("https://www.moneycontrol.com/news/tags/technical-analysis.html", 30)
-}
+        "business": ("https://www.moneycontrol.com/news/business", 30),
+        "companies": ("https://www.moneycontrol.com/news/tags/companies.html", 30),
+        "economy": ("https://www.moneycontrol.com/news/business/economy", 30),
+        "personal-finance": ("https://www.moneycontrol.com/news/business/personal-finance", 30),
+        "stocks": ("https://www.moneycontrol.com/news/business/stocks", 30)
+        #"tech-analysis": ("https://www.moneycontrol.com/news/tags/technical-analysis.html", 30)
+    }
     tsMapping = {}
     for category, url in base_urls.items():
         iterator = collection.find({"source":category}).sort("timestamp", pymongo.DESCENDING).limit(1)
