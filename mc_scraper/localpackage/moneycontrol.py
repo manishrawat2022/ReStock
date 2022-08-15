@@ -150,6 +150,6 @@ def sync_news():
                 break
 
     for doc in bufferColl.find({}).sort("timestamp",pymongo.DESCENDING):
-        collection.insert(doc)
+        collection.insert_one(doc)
 
     bufferColl.delete_many({})
