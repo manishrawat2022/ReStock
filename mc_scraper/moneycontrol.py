@@ -11,10 +11,6 @@ Original file is located at
 #### Install required dependencies
 """
 
-!pip install requests_html
-
-! /usr/bin/python3 -m pip install "pymongo[srv]"
-
 """#### Import the required libraries"""
 
 import requests
@@ -85,21 +81,18 @@ def get_article_data(url):
 
     return article
 
-urls = compute_article_links('https://www.moneycontrol.com/news/business/')
-urls
 
-get_article_data('https://www.moneycontrol.com/news/business/real-estate/construction-and-demolition-waste-is-choking-bengalurus-lungs-experts-cry-for-reforms-8835051.html')
+def sync_news():
+    """#### Connect to MongoDB"""
 
-"""#### Connect to MongoDB"""
+    client = MongoClient('mongodb+srv://random:Random@stock.mbex3cy.mongodb.net/?retryWrites=true&w=majority')
+    db = client["Stocks"]
+    collection = db["moneycontrol"]
+    bufferColl = db["buffer"]
 
-client = MongoClient('mongodb+srv://random:Random@stock.mbex3cy.mongodb.net/?retryWrites=true&w=majority')
-db = client["Stocks"]
-collection = db["moneycontrol"]
-bufferColl = db["buffer"]
+    bufferColl.delete_many({})
 
-bufferColl.delete_many({})
-
-base_urls = {
+    base_urls = {
     "business": ("https://www.moneycontrol.com/news/business", 30),
     "companies": ("https://www.moneycontrol.com/news/tags/companies.html", 30),
     "economy": ("https://www.moneycontrol.com/news/business/economy", 30),
@@ -107,55 +100,56 @@ base_urls = {
     "stocks": ("https://www.moneycontrol.com/news/business/stocks", 30)
     #"tech-analysis": ("https://www.moneycontrol.com/news/tags/technical-analysis.html", 30)
 }
+    tsMapping = {}
+    for category, url in base_urls.items():
+        iterator = collection.find({"source":category}).sort("timestamp", pymongo.DESCENDING).limit(1)
+        tsDoc = next(iterator, None)
+        if tsDoc != None :
+            tsMapping[category] = tsDoc["timestamp"]
 
-tsMapping = {}
-for category, url in base_urls.items():
-  iterator = collection.find({"source":category}).sort("timestamp", pymongo.DESCENDING).limit(1)
-  tsDoc = next(iterator, None)
-  if tsDoc != None :
-    tsMapping[category] = tsDoc["timestamp"]
+    print(tsMapping)
 
-print(tsMapping)
-
-for source, url_desc in base_urls.items():
-    print(f"Entering : {source}")
-    base_url = url_desc[0]
-    page_count = url_desc[1]
-    
-    finished = False
-    lastTs = tsMapping.get(source)
-
-    for i in range(1, page_count + 1):
-        print(f"Processing page : {i}")
-        if i==1:
-            url = base_url
-        else:
-            url = base_url + "/page-" + str(i)+"/";
-        links = compute_article_links(url)
-        articles = []
-        for link in links:
-            try:
-                #print(f"Processing link : {link}")
-                article = get_article_data(link)
-                if article == None:
-                    continue
-                article["source"] = source
-                article["link"] = link
-                
-                if lastTs == None or article["timestamp"] > lastTs:
-                  articles.append(article)
-                else:
-                  finished = True
-                  break
-            except Exception as e:
-                print(f"Exception while processing url {link}")
-
-        if len(articles) > 0:
-          print(f"Inserting {len(articles)} documents")
-          bufferColl.insert_many(articles, ordered = False)
+    for source, url_desc in base_urls.items():
+        print(f"Entering : {source}")
+        base_url = url_desc[0]
+        page_count = url_desc[1]
         
-        if finished:
-          break
+        finished = False
+        lastTs = tsMapping.get(source)
 
-for doc in bufferColl.find({}).sort("timestamp",pymongo.DESCENDING):
-    collection.insert(doc)
+        for i in range(1, page_count + 1):
+            print(f"Processing page : {i}")
+            if i==1:
+                url = base_url
+            else:
+                url = base_url + "/page-" + str(i)+"/";
+            links = compute_article_links(url)
+            articles = []
+            for link in links:
+                try:
+                    #print(f"Processing link : {link}")
+                    article = get_article_data(link)
+                    if article == None:
+                        continue
+                    article["source"] = source
+                    article["link"] = link
+                    
+                    if lastTs == None or article["timestamp"] > lastTs:
+                        articles.append(article)
+                    else:
+                        finished = True
+                    break
+                except Exception as e:
+                    print(f"Exception while processing url {link}")
+
+            if len(articles) > 0:
+                print(f"Inserting {len(articles)} documents")
+                bufferColl.insert_many(articles, ordered = False)
+            
+            if finished:
+                break
+
+    for doc in bufferColl.find({}).sort("timestamp",pymongo.DESCENDING):
+        collection.insert(doc)
+
+    bufferColl.delete_many({})
