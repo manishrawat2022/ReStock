@@ -11,5 +11,6 @@ def hello_world(request):
         <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>.
     """
     
+    moneycontrol.sync_news()
 
     return "Completed"
