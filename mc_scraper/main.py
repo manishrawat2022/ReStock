@@ -1,4 +1,4 @@
-import moneycontrol
+from localpackage import moneycontrol
 
 def hello_world(request):
     """HTTP Cloud Function.
@@ -10,7 +10,6 @@ def hello_world(request):
         Response object using `make_response`
         <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>.
     """
-    
     
 
     return "Completed"

@@ -1,0 +1,11 @@
+FROM python:3.8
+
+ADD colab-requirements.txt /
+
+RUN pip install -r /colab-requirements.txt
+
+ADD moneycontrol.ipynb /
+
+ENV PYTHONUNBUFFERED=1
+
+CMD [ "python", "./iris-classifier.py" ]
