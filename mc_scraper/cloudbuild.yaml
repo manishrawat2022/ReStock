@@ -4,7 +4,7 @@ steps:
   - gcloud
   - functions
   - deploy
-  - FUNCTION_NAME
+  - mc_sync
   - --region=asia-south1
   - --source=.
   - --trigger-http
